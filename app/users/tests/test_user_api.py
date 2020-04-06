@@ -57,7 +57,7 @@ class PublicUsersApiTests(TestCase):
         res = self.client.post(TOKEN_URL, payload)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertIn('token', res.data)
-        self.assertContain(res, 'token', status_code=status.HTTP_200_OK)
+        self.assertContains(res, 'token', status_code=status.HTTP_200_OK)
 
     def test_create_token_invalid_credentials(self):
         """Test token is not created if credentials are invalid"""
@@ -65,8 +65,7 @@ class PublicUsersApiTests(TestCase):
         res = self.client.post(TOKEN_URL, {
                                             'email': 'test@pokemail.net',
                                             'password': 'wrong'
-                                          }
-                              )
+                                          })
         self.assertNotIn('token', res.data)
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -75,8 +74,7 @@ class PublicUsersApiTests(TestCase):
         res = self.client.post(TOKEN_URL, {
                                             'email': 'test@pokemail.net',
                                             'password': 'testpass'
-                                          }
-                              )
+                                          })
         self.assertNotIn('token', res.data)
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -85,7 +83,6 @@ class PublicUsersApiTests(TestCase):
         res = self.client.post(TOKEN_URL, {
                                             'email': 'test@pokemail.net',
                                             'password': ''
-                                          }
-                              )
+                                          })
         self.assertNotIn('token', res.data)
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
