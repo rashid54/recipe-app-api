@@ -2,6 +2,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 
+from decimal import Decimal
 from rest_framework.test import APIClient
 from rest_framework import status
 
@@ -101,7 +102,6 @@ class PrivateRecipeApiTests(TestCase):
 
         serializer = RecipeDetailSerializer(recipe)
         self.assertEqual(res.data, serializer.data)
-        self.assertEqual(43, recipe.price)
 
     def test_create_recipe(self):
         """Test creating recipe"""
@@ -113,7 +113,10 @@ class PrivateRecipeApiTests(TestCase):
         res = self.client.post(RECIPE_URL, payload)
         recipe = Recipe.objects.get(id=res.data['id'])
         for key in payload.keys():
-            self.assertEqual(payload[key], getattr(recipe, key))
+            value = getattr(recipe, key)
+            if isinstance(value, Decimal):
+                value = float(value)
+            self.assertEqual(payload[key], value)
 
     def test_create_recipe_with_tags(self):
         """Test creating a recipe with tags"""
@@ -152,3 +155,39 @@ class PrivateRecipeApiTests(TestCase):
         self.assertEqual(ingredient.count(), 2)
         self.assertIn(ingredient1, ingredient)
         self.assertIn(ingredient2, ingredient)
+
+    def test_partial_update_recipe(self):
+        """Test updating a recipe with patch"""
+        recipe = sample_recipe(user=self.user)
+        recipe.tags.add(sample_tag(user=self.user))
+        new_tag = sample_tag(user=self.user, name='curry')
+
+        payload = {'title': 'chicken soup', 'tags': [new_tag.id]}
+        url = detail_url(recipe.id)
+        self.client.patch(url, payload)
+
+        recipe.refresh_from_db()
+        self.assertEqual(recipe.title, payload['title'])
+        tags = recipe.tags.all()
+        self.assertIn(new_tag, tags)
+        self.assertEqual(len(tags), 1)
+
+    def test_full_update_recipe(self):
+        """Test updating a recipe with put"""
+        recipe = sample_recipe(user=self.user)
+        recipe.tags.add(sample_tag(user=self.user))
+        payload = {
+            'title': 'recipe with tags',
+            'time_minutes': 60,
+            'price': 23.89
+        }
+
+        url = detail_url(recipe.id)
+        self.client.put(url, payload)
+
+        recipe.refresh_from_db()
+        self.assertEqual(recipe.title, payload['title'])
+        self.assertEqual(recipe.time_minutes, payload['time_minutes'])
+        self.assertEqual(float(recipe.price), payload['price'])
+        tags = recipe.tags.all()
+        self.assertEqual(len(tags), 0)

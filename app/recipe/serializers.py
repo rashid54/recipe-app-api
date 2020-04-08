@@ -30,6 +30,11 @@ class RecipeSerializer(serializers.ModelSerializer):
         many=True,
         queryset=Tag.objects.all()
     )
+    price = serializers.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        coerce_to_string=False
+    )
 
     class Meta:
         model = Recipe
