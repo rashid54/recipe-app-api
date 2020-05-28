@@ -198,6 +198,7 @@ class PrivateRecipeApiTests(TestCase):
         recipe.refresh_from_db()
         self.assertEqual(recipe.title, payload['title'])
         self.assertEqual(recipe.time_minutes, payload['time_minutes'])
+        # used float for avoiding error during testing
         self.assertEqual(float(recipe.price), payload['price'])
         tags = recipe.tags.all()
         self.assertEqual(len(tags), 0)
@@ -211,7 +212,7 @@ class RecipeImageUploadTests(TestCase):
             'pass3'
         )
         self.client = APIClient()
-        self.client.force_authenticate(self.client)
+        self.client.force_authenticate(self.user)
         self.recipe = sample_recipe(user=self.user)
 
     def tearDown(self):
@@ -221,7 +222,7 @@ class RecipeImageUploadTests(TestCase):
         """Test uploading image to recipe"""
         url = image_url(self.recipe.id)
         with tempfile.NamedTemporaryFile(suffix='.jpg') as ntf:
-            img = Image.new('RGB', (100,100))
+            img = Image.new('RGB', (100, 100))
             img.save(ntf, format='JPEG')
             ntf.seek(0)
             res = self.client.post(url, {'image': ntf}, format='multipart')
@@ -234,5 +235,9 @@ class RecipeImageUploadTests(TestCase):
     def test_upload_invalid_image_to_recipe(self):
         """Test uploading invalid image to recipe"""
         url = image_url(self.recipe.id)
-        res = self.client.post(url, {'image': 'fake image'}, format='multipart')
+        res = self.client.post(
+            url,
+            {'image': 'fake image'},
+            format='multipart'
+        )
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
