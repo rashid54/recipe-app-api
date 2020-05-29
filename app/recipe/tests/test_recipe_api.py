@@ -278,7 +278,6 @@ class FilteringTests(TestCase):
         self.serializer2 = RecipeSerializer(self.recipe2)
         self.serializer3 = RecipeSerializer(self.recipe3)
 
-
     def test_filter_recipes_by_tags(self):
         """filter recipes by specific tags"""
         res = self.client.get(
